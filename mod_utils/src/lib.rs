@@ -10,7 +10,7 @@ pub mod windows;
 
 pub fn hook(
     address: &mut [u8],
-    destination: usize,
+    destination: &mut u8,
     extra_clearance: Option<usize>,
     memory_manager: &mut MemoryProtection,
 ) {
@@ -22,8 +22,8 @@ pub fn hook(
     let jump_bytes = jump_instruction.to_le_bytes();
     address[..std::mem::size_of::<u64>()].copy_from_slice(&jump_bytes);
 
-    let destination_bytes = (destination as u64).to_le_bytes();
-    memory_manager.mem_copy(&mut address[6], &destination_bytes[0], 8);
+    let mut destination_bytes = (*destination as u64).to_le_bytes();
+    memory_manager.mem_copy(&mut address[6], &mut destination_bytes[0], 8);
 
     println!(
         "Created jump from {:#X} to {:#X} with a clearance of {}",
@@ -45,10 +45,10 @@ pub fn relative_to_absolute_address(
             .unwrap()
     };
 
-    let relative_address_location_ptr = relative_address_location as *const u8;
+    let relative_address_location_ptr = relative_address_location as *mut u8;
     memory_manager.mem_copy(
         &mut relative_address_bytes[0],
-        unsafe { &*relative_address_location_ptr },
+        unsafe { &mut *relative_address_location_ptr },
         4,
     );
 

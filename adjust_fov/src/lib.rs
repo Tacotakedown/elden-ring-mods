@@ -1,7 +1,7 @@
 use ini::Ini;
 use mod_utils::{
     aob::aob_scan,
-    memory,
+    hook, memory,
     mod_utils::{find_dll, get_current_mod_name},
     relative_to_absolute_address,
 };
@@ -9,7 +9,14 @@ use std::arch::asm;
 use std::env;
 use std::thread;
 use std::time::Duration;
-use winapi::{ctypes::c_void, um::consoleapi::AllocConsole};
+use winapi::{
+    ctypes::c_void,
+    um::{
+        consoleapi::AllocConsole,
+        memoryapi::VirtualQuery,
+        winnt::{MEMORY_BASIC_INFORMATION, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE},
+    },
+};
 use winapi::{
     shared::minwindef::{HINSTANCE, LPVOID},
     um::{
@@ -105,9 +112,6 @@ fn read_config() {
 }
 
 extern "system" fn main_thread(_lp_param: LPVOID) -> u32 {
-    unsafe {
-        AllocConsole();
-    }
     thread::sleep(Duration::from_secs(5));
 
     let mut memory_manager = memory::MemoryProtection::new();
@@ -116,12 +120,19 @@ extern "system" fn main_thread(_lp_param: LPVOID) -> u32 {
     let aob = "8d ? ? ? ? 0f 28 ? e8 ? ? ? ? 80 ? ? ? ? ? ? ? 0f 28 ? f3 ? 0f 10 ? ? ? ? ? ? 0f 57 ? f3 ? 0f 59";
     if let Some(hook_address) = aob_scan(aob) {
         let offset = 1;
-        let hook_address = hook_address - offset;
+        let mut hook_address = hook_address - offset;
         println!("hook address: {}", hook_address);
         let size = 9;
-        let mut hood_address_u8 = hook_address as u8;
+        let offset = 0;
+        let mut hook_address_u8 = hook_address as u8;
+
+        let fov_adjust_length = get_function_length(fov_adjust as *const () as *const ());
+
+        println!("Length of fov_adjust function: {} bytes", fov_adjust_length);
 
         read_config();
+
+        hook_address += offset;
 
         type FnType = fn();
         let fov_adjust_ptr: FnType = fov_adjust;
@@ -129,12 +140,18 @@ extern "system" fn main_thread(_lp_param: LPVOID) -> u32 {
 
         let raw_ref: &mut u8 = unsafe { &mut *raw_ptr };
 
-        memory_manager.mem_copy(raw_ref, &mut hood_address_u8, size);
+        memory_manager.mem_copy(raw_ref, &mut hook_address_u8, size);
         unsafe {
             ReturnAddress = hook_address + 14;
             ResolvedRelativeAddress =
                 relative_to_absolute_address(hook_address + 10, &mut memory_manager);
         }
+
+        let raw_ptr = hook_address as *mut u8;
+
+        let byte_slice: &mut [u8] = unsafe { std::slice::from_raw_parts_mut(raw_ptr, 9) };
+
+        hook(byte_slice, raw_ref, None, &mut memory_manager);
     }
 
     0
@@ -156,4 +173,24 @@ pub extern "system" fn DllMain(hinst_dll: HINSTANCE, fdw_reason: u32, _lp_reserv
         }
     }
     1
+}
+
+fn get_function_length(func_ptr: *const ()) -> usize {
+    let mut mbi: MEMORY_BASIC_INFORMATION = unsafe { std::mem::zeroed() };
+    let mbi_size = std::mem::size_of::<MEMORY_BASIC_INFORMATION>();
+    let result = unsafe { VirtualQuery(func_ptr as *const _, &mut mbi, mbi_size) };
+
+    if result == 0 {
+        return 0;
+    }
+
+    if mbi.Protect & (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE) == 0 {
+        return 0;
+    }
+
+    let start_addr = mbi.BaseAddress as usize;
+    let end_addr = (mbi.BaseAddress as usize + mbi.RegionSize) as *const u8;
+
+    let func_len = end_addr as usize - func_ptr as usize;
+    func_len
 }
