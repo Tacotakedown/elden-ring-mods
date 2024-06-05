@@ -2,7 +2,6 @@
 BINARIES=(
     "adjust_fov"
     "disable_rune_loss"
-    "mod_utils"
     "skip_intro"
 )
 

@@ -2,7 +2,6 @@ use std::mem;
 use winapi::vc::{vadefs::uintptr_t, vcruntime::size_t};
 
 pub mod aob;
-pub mod logger;
 pub mod memory;
 pub mod mod_utils;
 pub mod timer;

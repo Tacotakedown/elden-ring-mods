@@ -1,6 +1,8 @@
 use std::env;
+use std::ffi::OsString;
 use std::fs::File;
 use std::io::prelude::*;
+use std::os::windows::ffi::OsStringExt;
 use std::path::Path;
 use std::process;
 use std::ptr::null_mut;
@@ -14,8 +16,8 @@ use winapi::shared::ntdef::HANDLE;
 use winapi::shared::windef::HWND;
 use winapi::um::handleapi::CloseHandle;
 use winapi::um::libloaderapi::{
-    GetModuleFileNameA, GetModuleHandleExA, GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-    GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+    GetModuleFileNameA, GetModuleFileNameW, GetModuleHandleExA,
+    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
 };
 use winapi::um::memoryapi::{VirtualProtect, VirtualQuery};
 use winapi::um::minwinbase::LPTR;
@@ -30,7 +32,6 @@ use winapi::um::winuser::{
     GetWindowThreadProcessId, MB_ICONERROR, MB_OK, MB_SYSTEMMODAL,
 };
 
-use crate::logger::Logger;
 use crate::windows::to_string_wide;
 
 const MU_AOB_MASK: &str = "?";
@@ -83,18 +84,24 @@ pub fn get_current_process_name() -> String {
 }
 
 pub fn get_current_mod_name() -> String {
-    let mut current_mod_name = String::from_str("NULL").unwrap();
-    if current_mod_name == "NULL".to_string() {
-        current_mod_name = get_module_name(false);
+    unsafe {
+        let mut buf = vec![0u16; 1024];
+        let len = GetModuleFileNameW(null_mut(), buf.as_mut_ptr(), buf.len() as u32);
+        if len > 0 {
+            let os_string = OsString::from_wide(&buf[..len as usize]);
+            if let Some(file_name) = os_string.as_os_str().to_str() {
+                return file_name.to_owned();
+            }
+        }
     }
-    current_mod_name
+    String::from("NULL")
 }
 
 pub fn get_mod_folder_path() -> String {
     format!("mods\\{}", get_current_mod_name())
 }
 
-fn find_dll(base_folder: &str, dll_name: &str) -> Option<String> {
+pub fn find_dll(base_folder: &str, dll_name: &str) -> Option<String> {
     let base_folder = Path::new(base_folder);
 
     if let Ok(entries) = base_folder.read_dir() {
@@ -128,11 +135,11 @@ fn find_dll(base_folder: &str, dll_name: &str) -> Option<String> {
     None
 }
 
-pub fn show_error_popup(error: String, logger: &mut Logger) {
+pub fn show_error_popup(error: String) {
     let error_wide = to_string_wide(&error);
     let mod_name_wide = to_string_wide(&get_current_mod_name());
 
-    logger.log(&format!("Error Popup constructed for: {}", error));
+    println!("Error Popup constructed for: {}", error);
     unsafe {
         MessageBoxW(
             null_mut(),
