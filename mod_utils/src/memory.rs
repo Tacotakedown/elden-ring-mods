@@ -55,30 +55,30 @@ impl MemoryProtection {
         true
     }
 
-    pub fn mem_copy(&mut self, destination: usize, source: usize, num_bytes: usize) {
-        if !self.toggle_memory_protection(false, destination, num_bytes) {
+    pub fn mem_copy(&mut self, destination: &mut u8, source: &u8, num_bytes: usize) {
+        if !self.toggle_memory_protection(false, *destination as usize, num_bytes) {
             eprintln!("Failed to disable memory protection for destination");
             return;
         }
-        if !self.toggle_memory_protection(false, source, num_bytes) {
+        if !self.toggle_memory_protection(false, *source as usize, num_bytes) {
             eprintln!("Failed to disable memory protection for source");
             return;
         }
 
         unsafe {
-            std::ptr::copy_nonoverlapping(source as *const u8, destination as *mut u8, num_bytes);
+            std::ptr::copy_nonoverlapping(source, destination, num_bytes);
         }
 
-        if !self.toggle_memory_protection(true, source, num_bytes) {
+        if !self.toggle_memory_protection(true, *source as usize, num_bytes) {
             eprintln!("Failed to restore memory protection for source");
         }
-        if !self.toggle_memory_protection(true, destination, num_bytes) {
+        if !self.toggle_memory_protection(true, *destination as usize, num_bytes) {
             eprintln!("Failed to restore memory protection for destination");
         }
     }
 
-    pub fn mem_set(&mut self, address: usize, byte: u8, num_bytes: usize) {
-        if !self.toggle_memory_protection(false, address, num_bytes) {
+    pub fn mem_set(&mut self, address: &mut u8, byte: u8, num_bytes: usize) {
+        if !self.toggle_memory_protection(false, *address as usize, num_bytes) {
             eprintln!("Failed to disable memory protection for address");
             return;
         }
@@ -87,7 +87,7 @@ impl MemoryProtection {
             std::ptr::write_bytes(address as *mut u8, byte, num_bytes);
         }
 
-        if !self.toggle_memory_protection(true, address, num_bytes) {
+        if !self.toggle_memory_protection(true, *address as usize, num_bytes) {
             eprintln!("Failed to restore memory protection for address");
         }
     }

@@ -33,15 +33,12 @@ fn fov_adjust() {
     }
 
     unsafe {
-        // Call the resolved relative address
         let call_fn: extern "C" fn() = std::mem::transmute(ResolvedRelativeAddress);
         call_fn();
 
-        // Move data from `fov` to `xmm0`
         let xmm0: [f32; 4] = Fov;
         std::arch::x86_64::_mm_load_ps(xmm0.as_ptr());
 
-        // Jump to return address
         let jmp_fn: extern "C" fn() = std::mem::transmute(ReturnAddress);
         jmp_fn();
     }
@@ -122,14 +119,21 @@ extern "system" fn main_thread(_lp_param: LPVOID) -> u32 {
         let hook_address = hook_address - offset;
         println!("hook address: {}", hook_address);
         let size = 9;
+        let mut hood_address_u8 = hook_address as u8;
 
         read_config();
 
-        let fov_adjust = fov_adjust as usize;
-        memory_manager.mem_copy(fov_adjust, hook_address, size);
+        type FnType = fn();
+        let fov_adjust_ptr: FnType = fov_adjust;
+        let raw_ptr = fov_adjust_ptr as *mut u8;
+
+        let raw_ref: &mut u8 = unsafe { &mut *raw_ptr };
+
+        memory_manager.mem_copy(raw_ref, &mut hood_address_u8, size);
         unsafe {
             ReturnAddress = hook_address + 14;
-            ResolvedRelativeAddress = relative_to_absolute_address(hook_address + 10);
+            ResolvedRelativeAddress =
+                relative_to_absolute_address(hook_address + 10, &mut memory_manager);
         }
     }
 
