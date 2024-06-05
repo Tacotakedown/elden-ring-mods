@@ -1,27 +1,28 @@
 use ini::Ini;
-use lazy_static::lazy_static;
 use mod_utils::{
-    aob::{self, aob_scan},
+    aob::aob_scan,
     memory,
     mod_utils::{find_dll, get_current_mod_name},
-    relative_to_absolute_address, timer, windows,
+    relative_to_absolute_address,
 };
 use std::arch::asm;
+use std::env;
+use std::thread;
 use std::time::Duration;
-use std::{borrow::BorrowMut, env};
-use std::{default, sync::Mutex};
-use std::{process::Command, thread};
 use winapi::{ctypes::c_void, um::consoleapi::AllocConsole};
 use winapi::{
     shared::minwindef::{HINSTANCE, LPVOID},
     um::{
-        libloaderapi::DisableThreadLibraryCalls, minwinbase::LPTHREAD_START_ROUTINE,
-        processthreadsapi::CreateThread, winnt::DLL_PROCESS_ATTACH,
+        libloaderapi::DisableThreadLibraryCalls, processthreadsapi::CreateThread,
+        winnt::DLL_PROCESS_ATTACH,
     },
 };
 
+#[allow(non_upper_case_globals)]
 static mut Fov: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+#[allow(non_upper_case_globals)]
 static mut ReturnAddress: usize = 0;
+#[allow(non_upper_case_globals)]
 static mut ResolvedRelativeAddress: usize = 0;
 
 fn fov_adjust() {
@@ -47,7 +48,7 @@ fn fov_adjust() {
 }
 
 fn read_config() {
-    let mod_name = get_current_mod_name();
+    // let mod_name = get_current_mod_name();
     let dll_name = format!("adjust_fov.dll");
 
     let base_folder = env::current_exe().unwrap();
