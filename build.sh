@@ -1,8 +1,9 @@
 
 BINARIES=(
-    "adjust_fov"
-    "disable_rune_loss"
-    "skip_intro"
+    # "adjust_fov",
+    "disable_rune_loss",
+    "console_logger"
+    "camera_fix"
 )
 
 echo "Available binaries:"

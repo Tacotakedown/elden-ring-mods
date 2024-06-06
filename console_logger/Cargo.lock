@@ -19,7 +19,6 @@ name = "console_logger"
 version = "0.1.0"
 dependencies = [
  "cc",
- "mod_utils",
  "rust-ini",
  "winapi",
 ]
@@ -77,24 +76,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 
 [[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-
-[[package]]
 name = "libc"
 version = "0.2.155"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
-
-[[package]]
-name = "mod_utils"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "winapi",
-]
 
 [[package]]
 name = "once_cell"

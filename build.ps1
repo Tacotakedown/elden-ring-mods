@@ -1,7 +1,8 @@
 $BINARIES = @(
-    "adjust_fov",
+    # "adjust_fov",
     "disable_rune_loss",
-    "skip_intro"
+    "console_logger"
+    "camera_fix"
 )
 
 Write-Host "Available binaries:"
