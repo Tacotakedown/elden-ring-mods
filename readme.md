@@ -16,7 +16,7 @@ git clone https://github.com/Tacotakedown/elden-ring-mods && cd elden-ring-mods
 
 ## Linux:
 
-Make sure you have access to Windows.h and its dependencies on your distro
+Make sure you have access to `Windows.h` and its dependencies on your distro
 
 ```bash
 git clone https://github.com/Tacotakedown/elden-ring-mods && cd elden-ring-mods
