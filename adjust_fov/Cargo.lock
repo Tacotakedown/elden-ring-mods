@@ -7,6 +7,7 @@ name = "adjust_fov"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "elden-ring-utils-rs",
  "lazy_static",
  "rust-ini",
  "winapi",
@@ -57,6 +58,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "442039f5147480ba31067cb00ada1adae6892028e40e45fc5de7b7df6dcc1b5f"
 dependencies = [
  "const-random",
+]
+
+[[package]]
+name = "elden-ring-utils-rs"
+version = "0.1.0"
+source = "git+https://github.com/Tacotakedown/elden-ring-util-rs#94cb39bf95cc14fb2267a8f6aae91cd1385898f5"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]
