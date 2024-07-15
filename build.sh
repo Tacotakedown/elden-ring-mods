@@ -4,6 +4,7 @@ BINARIES=(
     "disable_rune_loss",
     "console_logger"
     "camera_fix"
+    "ride_anywhere"
 )
 
 echo "Available binaries:"
